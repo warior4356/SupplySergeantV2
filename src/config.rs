@@ -2,65 +2,64 @@ use std::{fs, path::PathBuf};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use toml;
-use crate::config::toml::de::Error;
 
+// Base program settings struct
 #[derive(Debug, Deserialize, Serialize)]
-pub struct SystemSettings {
-    inv_types_path: PathBuf,
-    corporation_id: usize,
-    fits_path: PathBuf,
-    gsheets_client_secret_path: PathBuf,
+pub struct GlobalSettings {
+    pub inv_types_path: PathBuf,
+    pub corporation_id: usize,
+    pub fits_path: PathBuf,
+    pub gsheets_client_secret_path: PathBuf,
 }
 
+// Settings for ESI connection
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ESISettings {
-    agent_id: String,
-    auth_code: String,
-    client_id: String,
-    client_secret: String,
-    refresh_token: String,
+    pub agent_id: String,
+    pub auth_code: String,
+    pub client_id: String,
+    pub client_secret: String,
+    pub refresh_token: String,
 }
 
+// Target system specific setting
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TargetSystem {
-    check_contracts: bool,
-    check_market: bool,
-    citadel_ids: Vec<usize>,
-    gsheets_starting_page: usize,
-    market_reference_region: usize,
-    output_file_name: String,
-    region_id: usize,
-    ships: HashMap<String, usize>,
-    items: HashMap<String, usize>,
+    pub check_contracts: bool,
+    pub check_market: bool,
+    pub citadel_ids: Vec<usize>,
+    pub gsheets_starting_page: usize,
+    pub market_reference_region: usize,
+    pub output_file_name: String,
+    pub region_id: usize,
+    pub ships: HashMap<String, usize>,
+    pub items: HashMap<String, usize>,
 }
 
+// Struct for all settings combined
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
-    system_settings: SystemSettings,
-    esi_settings: ESISettings,
-    target_systems: HashMap<String, TargetSystem>,
+    pub global_settings: GlobalSettings,
+    pub esi_settings: ESISettings,
+    pub target_systems: HashMap<String, TargetSystem>,
 }
 
-pub fn read_config(config_path: PathBuf) -> Config {
+// Read config file into struct and return it
+pub fn read_config(config_path: PathBuf) -> Config { // Make return a result instead of exiting???
     let toml_string = match fs::read_to_string(&config_path) { 
         Ok(c) => c,
 
         Err(_) => {
             eprintln!("Could not read file `{:?}`", config_path.to_str());
-            eprintln!("Could not read file");
             std::process::exit(1);
         }
     };
     
-    // println!("{:?}", toml_string);
-    // let config: HashMap<String, String> = toml::from_str(toml_string.as_str()).unwrap();
-    // let config: Config = toml::from_str(toml_string.as_str()).unwrap();
-    // println!("{:?}", config);
-    let config: Config = match toml::from_str::<Result<Config, Error>>(&toml_string.as_str()).unwrap(){ // This line wouldn't work without result defined, but if I define it like this, it says error does not satisfy the trait deserialize
+    let config: Config = match toml::from_str(&toml_string) {
         Ok(c) => c,
 
         Err(_) => {
-            eprintln!("Could not parse toml string");
+            eprintln!("Could not parse toml string from `{:?}`", config_path.to_str());
             std::process::exit(1);
         }
     };
